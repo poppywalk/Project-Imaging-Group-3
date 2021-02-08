@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import random
 
-n = 2
+n = 4
 
 trainzero   = 'C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3\\train+val\\train\\0'
 trainone    = 'C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3\\train+val\\train\\1'
@@ -22,5 +22,6 @@ for i in range(0,n):
     axes[1,i].set_title(f'Class one, image: {index_one}')
 
 plt.show()
+
     
     

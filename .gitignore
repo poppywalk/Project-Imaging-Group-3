@@ -3,3 +3,9 @@ test
 train+val
 Test.py
 test2.py
+cnn.ipynb
+mlp.ipynb
+logs
+model1
+model2
+model3
