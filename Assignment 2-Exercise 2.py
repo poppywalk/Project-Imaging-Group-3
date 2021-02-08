@@ -79,9 +79,9 @@ model2.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accur
 model3.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
 # Add a tensor board
-board_1 = TensorBoard(r'logs\2_2_model1')
-board_2 = TensorBoard(r'logs\2_2_model2')
-board_3 = TensorBoard(r'logs\2_2_model3')
+board_1 = TensorBoard(r'logs\logs\2_2_model1')
+board_2 = TensorBoard(r'logs\logs\2_2_model2')
+board_3 = TensorBoard(r'logs\logs\2_2_model3')
 
 # Fit 
 model1.fit(X_train, y_train, batch_size=32, epochs=10, verbose=1, validation_data=(X_val, y_val), callbacks=[board_1])

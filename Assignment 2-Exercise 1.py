@@ -58,8 +58,8 @@ model_4.add(Flatten(input_shape=(28,28,1)))
 # 4 Hidden layers
 model_4.add(Dense(64, activation='relu'))
 model_4.add(Dense(64, activation='relu'))
+#model_4.add(Dense(128, activation='relu'))
 model_4.add(Dense(64, activation='relu'))
-model_4.add(Dense(128, activation='relu'))
 
 # Output layer
 model_4.add(Dense(10, activation='softmax'))
@@ -69,7 +69,7 @@ model_4.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accu
 
 # Add a monitoring board
 model_4_title = "Four-layer-model"
-board = TensorBoard(r'logs\ ' + model_4_title)
+board = TensorBoard(r'logs\logs\ ' + model_4_title)
 
 # Fit the data
 model_4.fit(X_train, y_train, batch_size=32, epochs=10, verbose=1, validation_data=(X_val, y_val), callbacks=[board])

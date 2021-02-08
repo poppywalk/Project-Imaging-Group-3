@@ -91,8 +91,8 @@ model.add(Dense(4, activation='softmax'))
 model.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
 # Add a tensor board
-model_name = "Custom_model_1_4class"
-board = TensorBoard(r'logs\ ' + model_name)
+model_name = "Exercise_3_Model"
+board = TensorBoard(r'logs\logs\ ' + model_name)
 
 # Fit 
 model.fit(X_train, y_train, batch_size=32, epochs=10, verbose=1, validation_data=(X_val, y_val), callbacks=[board])
