@@ -57,7 +57,7 @@ model_4.add(Flatten(input_shape=(28,28,1)))
 
 # 4 Hidden layers
 model_4.add(Dense(128, activation='relu'))
-model_4.add(Dense(64, activation='relu'))
+model_4.add(Dense(128, activation='relu'))
 model_4.add(Dense(64, activation='relu'))
 #model_4.add(Dense(128, activation='relu'))
 
