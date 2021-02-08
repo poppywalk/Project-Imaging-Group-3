@@ -56,10 +56,10 @@ model_4 = Sequential()
 model_4.add(Flatten(input_shape=(28,28,1)))
 
 # 4 Hidden layers
+model_4.add(Dense(128, activation='relu'))
 model_4.add(Dense(64, activation='relu'))
 model_4.add(Dense(64, activation='relu'))
 #model_4.add(Dense(128, activation='relu'))
-model_4.add(Dense(64, activation='relu'))
 
 # Output layer
 model_4.add(Dense(10, activation='softmax'))
@@ -68,7 +68,7 @@ model_4.add(Dense(10, activation='softmax'))
 model_4.compile(loss='categorical_crossentropy', optimizer='sgd', metrics=['accuracy'])
 
 # Add a monitoring board
-model_4_title = "Four-layer-model"
+model_4_title = "Model_exercise_1"
 board = TensorBoard(r'logs\logs\ ' + model_4_title)
 
 # Fit the data
