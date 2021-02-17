@@ -92,9 +92,9 @@ def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filte
 
 # get the model
 model = get_model()
-model.summary()
 
-stop
+# Check the layers
+#model.summary()
 
 # get the data generators
 train_gen, val_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3')
