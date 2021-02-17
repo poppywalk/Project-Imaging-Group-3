@@ -3,7 +3,6 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-# print('Training done on CPU')
 
 import tensorflow as tf
 import numpy as np
@@ -16,7 +15,6 @@ from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 import matplotlib.pyplot as plt
 # unused for now, to be used for ROC analysis
 from sklearn.metrics import roc_curve, auc
-
 
 # Limit memory of the GPU to 2 GB
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -60,8 +58,11 @@ def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
 
      return train_gen, val_gen
 
+###### --------------------------------------------------------------------------------------------------------------------------######
+## Exercise-2 Group03 ##
 
-def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64):
+# Change the layers below to turn a fully connected layer to a convolutional layer model
+def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, third_filters=64,last_filters=1):
 
      # build the model
      model = Sequential()
@@ -72,20 +73,28 @@ def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filte
      model.add(Conv2D(second_filters, kernel_size, activation = 'relu', padding = 'same'))
      model.add(MaxPool2D(pool_size = pool_size))
 
-     model.add(Flatten())
-     model.add(Dense(64, activation = 'relu'))
-     model.add(Dense(1, activation = 'sigmoid'))
+     # Add an extra layer
+     model.add(Conv2D(third_filters, (6,6), activation = 'relu', padding = 'valid'))
+     
+     # 1 by 1 convolution
+     model.add(Conv2D(last_filters, (1,1), activation = 'sigmoid', padding = 'valid'))
 
+
+     model.add(Flatten())
+     #model.add(Dense(64, activation = 'relu'))
+     #model.add(Dense(1, activation = 'sigmoid'))
 
      # compile the model
      model.compile(SGD(lr=0.01, momentum=0.95), loss = 'binary_crossentropy', metrics=['accuracy'])
 
      return model
-
+###### ----------------------------------------------------------------------------------------------------------------------------------######
 
 # get the model
 model = get_model()
+model.summary()
 
+stop
 
 # get the data generators
 train_gen, val_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3')
@@ -112,26 +121,37 @@ callbacks_list = [checkpoint, tensorboard]
 train_steps = train_gen.n//train_gen.batch_size
 val_steps = val_gen.n//val_gen.batch_size
 
-#history = model.fit(train_gen, steps_per_epoch=train_steps,
-#                    validation_data=val_gen,
-#                    validation_steps=val_steps,
-#                    epochs=3,
-#                    callbacks=callbacks_list)
+history = model.fit(train_gen, steps_per_epoch=train_steps,
+                    validation_data=val_gen,
+                    validation_steps=val_steps,
+                    epochs=3,
+                    callbacks=callbacks_list)
 
+
+###### ---------------------------------------------------------------------------------######
+## Exercise-1 Group03 ##
 # ROC analysis
 model.load_weights('my_first_cnn_model_weights.hdf5')
+# Get the predictions of the model
 predictions = model.predict(val_gen)
-
+# Plot a line from 0 to 1 with stepsize 0.01
 line = np.arange(start=0,stop=1,step=0.01)
-
+# Make the roc curve with the help of the predictions of the model
 fpr, tpr,_ = roc_curve(val_gen.classes,predictions)
+# Plot the figure
 plt.plot(line,line,'--',fpr,tpr,'-')
+# Give the figure a title
 plt.title('ROC-curve')
+# Give the x-axis a label
 plt.xlabel('False Positive Rate')
+# Give the y-axis a label
 plt.ylabel('True Positive Rate')
-
+# Calculate the AUC
 AUC = auc(fpr,tpr)
+# Print the AUC in the plot
 plt.text(0.8,0.2,f'AUC = {AUC:.3f}')
+# Print the AUC
 print(AUC)
-
+# Show the plot
 plt.show()
+###### ---------------------------------------------------------------------------------######
