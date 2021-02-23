@@ -6,7 +6,10 @@ Author: Mitko Veta
 
 # disable overly verbose tensorflow logging
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}   
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}  
+# os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+# os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+
 import tensorflow as tf
 
 
@@ -22,6 +25,19 @@ from tensorflow.keras.applications.mobilenet_v2 import MobileNetV2, preprocess_i
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
 
+# Limit memory of the GPU to 2 GB
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  # Restrict TensorFlow to only allocate 2GB of memory on the first GPU
+  try:
+    tf.config.experimental.set_virtual_device_configuration(
+        gpus[0],
+        [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+  except RuntimeError as e:
+    # Virtual devices must be set before GPUs have been initialized
+    print(e)
 
 def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
 
@@ -53,7 +69,7 @@ input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3)
 input = Input(input_shape)
 
 # get the pretrained model, cut out the top layer
-pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights=None)
+pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights='imagenet')
 
 # if the pretrained model it to be used as a feature extractor, and not for
 # fine-tuning, the weights of the model can be frozen in the following way
@@ -74,7 +90,7 @@ model.compile(SGD(lr=0.001, momentum=0.95), loss = 'binary_crossentropy', metric
 model.summary()
 
 # get the data generators
-train_gen, val_gen = get_pcam_generators(r'C:\Users\20182768\Documents\school\jaar 3\kwartiel 3\project imaging\project imaging code')
+train_gen, val_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3')
 
 
 # save the model and weights

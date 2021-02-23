@@ -62,7 +62,41 @@ def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
 ## Exercise-2 Group03 ##
 
 # Change the layers below to turn a fully connected layer to a convolutional layer model
-def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, third_filters=64,last_filters=1):
+# def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64, third_filters=64,last_filters=1):
+
+#      # build the model
+#      model = Sequential()
+
+#      model.add(Conv2D(first_filters, kernel_size, activation = 'relu', padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3)))
+#      model.add(MaxPool2D(pool_size = pool_size))
+
+#      model.add(Conv2D(second_filters, kernel_size, activation = 'relu', padding = 'same'))
+#      model.add(MaxPool2D(pool_size = pool_size))
+
+#      # Add an extra layer
+#      model.add(Conv2D(third_filters, (6,6), activation = 'relu', padding = 'valid'))
+     
+#      # 1 by 1 convolution
+#      model.add(Conv2D(last_filters, (1,1), activation = 'sigmoid', padding = 'valid'))
+
+
+#      model.add(Flatten())
+#      #model.add(Dense(64, activation = 'relu'))
+#      #model.add(Dense(1, activation = 'sigmoid'))
+
+#      # compile the model
+#      model.compile(SGD(lr=0.01, momentum=0.95), loss = 'binary_crossentropy', metrics=['accuracy'])
+
+#      return model
+###### ----------------------------------------------------------------------------------------------------------------------------------######
+
+
+
+###### --------------------------------------------------------------------------------------------------------------------------######
+## Exercise-1 Group03 ##
+
+# Change the layers below to turn a fully connected layer to a convolutional layer model
+def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64):
 
      # build the model
      model = Sequential()
@@ -73,28 +107,21 @@ def get_model(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filte
      model.add(Conv2D(second_filters, kernel_size, activation = 'relu', padding = 'same'))
      model.add(MaxPool2D(pool_size = pool_size))
 
-     # Add an extra layer
-     model.add(Conv2D(third_filters, (6,6), activation = 'relu', padding = 'valid'))
-     
-     # 1 by 1 convolution
-     model.add(Conv2D(last_filters, (1,1), activation = 'sigmoid', padding = 'valid'))
-
-
      model.add(Flatten())
-     #model.add(Dense(64, activation = 'relu'))
-     #model.add(Dense(1, activation = 'sigmoid'))
+     model.add(Dense(64, activation = 'relu'))
+     model.add(Dense(1, activation = 'sigmoid'))
 
      # compile the model
      model.compile(SGD(lr=0.01, momentum=0.95), loss = 'binary_crossentropy', metrics=['accuracy'])
 
      return model
-###### ----------------------------------------------------------------------------------------------------------------------------------######
+##### ----------------------------------------------------------------------------------------------------------------------------------######
 
 # get the model
 model = get_model()
 
 # Check the layers
-#model.summary()
+model.summary()
 
 # get the data generators
 train_gen, val_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3')
@@ -121,11 +148,11 @@ callbacks_list = [checkpoint, tensorboard]
 train_steps = train_gen.n//train_gen.batch_size
 val_steps = val_gen.n//val_gen.batch_size
 
-# history = model.fit(train_gen, steps_per_epoch=train_steps,
-#                     validation_data=val_gen,
-#                     validation_steps=val_steps,
-#                     epochs=3,
-#                     callbacks=callbacks_list)
+history = model.fit(train_gen, steps_per_epoch=train_steps,
+                     validation_data=val_gen,
+                     validation_steps=val_steps,
+                     epochs=3,
+                     callbacks=callbacks_list)
 
 
 ###### ---------------------------------------------------------------------------------######
