@@ -54,12 +54,12 @@ def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
                                              batch_size=val_batch_size,
                                              class_mode='binary')
 
-     #predict_gen = datagen.flow_from_directory(valid_path,
-                                            #  target_size=(IMAGE_SIZE, IMAGE_SIZE),
-                                            #  batch_size=val_batch_size,
-                                            #  class_mode='binary',shuffle=False)                                             
+     predict_gen = datagen.flow_from_directory(valid_path,
+                                             target_size=(IMAGE_SIZE, IMAGE_SIZE),
+                                             batch_size=val_batch_size,
+                                             class_mode='binary',shuffle=False)                                             
 
-     return train_gen, val_gen #, predict_gen
+     return train_gen, val_gen , predict_gen
 
 # the size of the images in the PCAM dataset
 IMAGE_SIZE = 96
@@ -70,7 +70,7 @@ input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3)
 input = Input(input_shape)
 
 # get the pretrained model, cut out the top layer with imagenet weights
-pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights=None)
+pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights='imagenet')
 
 # get the pretrained model, cut out the top layer with no imagenet weigths
 #pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights=None)
@@ -82,7 +82,7 @@ pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights=Non
 
 output = pretrained(input)
 output = GlobalAveragePooling2D()(output)
-#output = Dropout(0.5)(output)
+output = Dropout(0.5)(output)
 output = Dense(1, activation='sigmoid')(output)
 
 model = Model(input, output)
@@ -94,9 +94,9 @@ model.compile(SGD(lr=0.001, momentum=0.95), loss = 'binary_crossentropy', metric
 model.summary()
 
 # get the data generators
-train_gen, val_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3\\')
+#train_gen, val_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3\\')
 
-#train_gen, val_gen, predict_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3\\')
+train_gen, val_gen, predict_gen = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3\\')
 
 # save the model and weights
 model_name = 'my_first_transfer_model'
@@ -126,27 +126,27 @@ history = model.fit_generator(train_gen, steps_per_epoch=train_steps,
                     epochs=10,
                     callbacks=callbacks_list)
 
-# # ROC analysis
-# model.load_weights('my_first_transfer_model_weights.hdf5')
-# # Get the predictions of the model
-# predictions = model.predict(predict_gen)
-# # Plot a line from 0 to 1 with stepsize 0.01
-# line = np.arange(start=0,stop=1,step=0.01)
-# # Make the roc curve with the help of the predictions of the model
-# fpr, tpr,_ = roc_curve(predict_gen.classes,predictions)
-# # Plot the figure
-# plt.plot(line,line,'--',fpr,tpr,'-')
-# # Give the figure a title
-# plt.title('ROC-curve')
-# # Give the x-axis a label
-# plt.xlabel('False Positive Rate')
-# # Give the y-axis a label
-# plt.ylabel('True Positive Rate')
-# # Calculate the AUC
-# AUC = auc(fpr,tpr)
-# # Print the AUC in the plot
-# plt.text(0.8,0.2,f'AUC = {AUC:.3f}')
-# # Print the AUC
-# print(AUC)
-# # Show the plot
-# plt.show()
+# ROC analysis
+model.load_weights('my_first_transfer_model_weights.hdf5')
+# Get the predictions of the model
+predictions = model.predict(predict_gen)
+# Plot a line from 0 to 1 with stepsize 0.01
+line = np.arange(start=0,stop=1,step=0.01)
+# Make the roc curve with the help of the predictions of the model
+fpr, tpr,_ = roc_curve(predict_gen.classes,predictions)
+# Plot the figure
+plt.plot(line,line,'--',fpr,tpr,'-')
+# Give the figure a title
+plt.title('ROC-curve')
+# Give the x-axis a label
+plt.xlabel('False Positive Rate')
+# Give the y-axis a label
+plt.ylabel('True Positive Rate')
+# Calculate the AUC
+AUC = auc(fpr,tpr)
+# Print the AUC in the plot
+plt.text(0.8,0.2,f'AUC = {AUC:.3f}')
+# Print the AUC
+print(AUC)
+# Show the plot
+plt.show()
