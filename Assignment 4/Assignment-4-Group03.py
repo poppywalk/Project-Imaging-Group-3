@@ -82,6 +82,7 @@ pretrained = MobileNetV2(input_shape=input_shape, include_top=False, weights='im
 
 output = pretrained(input)
 output = GlobalAveragePooling2D()(output)
+# comment out the dropout layer when it is not used
 output = Dropout(0.5)(output)
 output = Dense(1, activation='sigmoid')(output)
 
