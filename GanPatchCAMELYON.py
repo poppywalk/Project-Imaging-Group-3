@@ -138,7 +138,7 @@ for e in range(epochs):
   # if e % 5 == 0:
   #   noise = np.random.normal(0, 1, size=[100, latent_dim])
   #   generatedImages = generator.predict(noise)
-  #   generatedImages = generatedImages.reshape(100, 28, 28, 3)          
+  #   generatedImages = generatedImages.reshape(100, 96, 96, 3)          
   #   plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(e))
   #   display.display(plt.gcf())
   #   display.clear_output(wait=True)
