@@ -93,12 +93,14 @@ def Generator():
   generator.add(Reshape((12,12,128)))
   # (n,12,12,128)
   generator.add(UpSampling2D(size=(2, 2)))
+  # Conv2DTranspose can be used as well
   # (n,24,24,128)
   generator.add(Conv2D(64, kernel_size=(3, 3), padding='same'))
   # (n,24,24,64)
   generator.add(LeakyReLU(0.2))
   # (n,24,24,64)
   generator.add(UpSampling2D(size=(4, 4)))
+  # Conv2DTranspose can be used as well
   # (n,96,96,64)
   generator.add(Conv2D(3, kernel_size=(3, 3), padding='same', activation='tanh'))
   # (n,96,96,3)
@@ -110,8 +112,8 @@ generator = Generator()
 discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
-discriminator.summary()
-generator.summary()
+# discriminator.summary()
+# generator.summary()
 
 discriminator.trainable = False
 z = keras.layers.Input(shape=(latent_dim,))
