@@ -55,35 +55,53 @@ def get_pcam_generators(base_dir, train_batch_size=32):
     
      return train_gen
 
-def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64):
+def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64,third_filters=32,fourth_filters=64):
 
-     model = Sequential()
-
-     model.add(Conv2D(first_filters, kernel_size, padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3)))
+     model = Sequential() 
+     # (n,96,96,3)
+     model.add(Conv2D(first_filters, kernel_size, padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3))) 
+     # (n,96,96,32)
      model.add(LeakyReLU(0.2))
-     model.add(MaxPool2D(pool_size = pool_size))
-
+     # (n,96,96,32)
+     #model.add(MaxPool2D(pool_size = pool_size))
+     model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
+     # (n,24,24,32)
      model.add(Conv2D(second_filters, kernel_size, padding = 'same'))
+     # (n,24,24,64)
      model.add(LeakyReLU(0.2))
-     model.add(MaxPool2D(pool_size = pool_size))
-
+     # (n,24,24,64)
+     #model.add(MaxPool2D(pool_size = pool_size))
+     model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
+     # (n,6,6,64)
      model.add(Flatten())
+     # (n,2304)
      model.add(Dense(64))
+     # (n,64)
      model.add(LeakyReLU(0.2))
+     # (n,64)
      model.add(Dense(1, activation = 'sigmoid'))
-
+     # (n,1)
      return model
 
 def Generator():
   generator = keras.models.Sequential()
+  # 
   generator.add(Dense(128*12*12, input_dim=latent_dim, kernel_initializer=keras.initializers.RandomNormal(stddev=0.02)))
+  # (n,18432)
   generator.add(LeakyReLU(0.2))
+  # (n,18342)
   generator.add(Reshape((12,12,128)))
+  # (n,12,12,128)
   generator.add(UpSampling2D(size=(2, 2)))
+  # (n,24,24,128)
   generator.add(Conv2D(64, kernel_size=(3, 3), padding='same'))
+  # (n,24,24,64)
   generator.add(LeakyReLU(0.2))
+  # (n,24,24,64)
   generator.add(UpSampling2D(size=(4, 4)))
+  # (n,96,96,64)
   generator.add(Conv2D(3, kernel_size=(3, 3), padding='same', activation='tanh'))
+  # (n,96,96,3)
   return generator
 
 discriminator = Discriminator()
@@ -92,14 +110,14 @@ generator = Generator()
 discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
-# discriminator.summary()
-# generator.summary()
+discriminator.summary()
+generator.summary()
 
 discriminator.trainable = False
 z = keras.layers.Input(shape=(latent_dim,))
 x = generator(z)
-D_G_z = discriminator(x)
-gan = keras.models.Model(inputs=z, outputs=D_G_z)
+D = discriminator(x)
+gan = keras.models.Model(inputs=z, outputs=D)
 gan.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
 generator_optimizer = tf.keras.optimizers.Adam(1e-4)
