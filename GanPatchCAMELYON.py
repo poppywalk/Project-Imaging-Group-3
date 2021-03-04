@@ -1,5 +1,6 @@
 import keras
 import os
+import time
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt 
@@ -101,17 +102,28 @@ D_G_z = discriminator(x)
 gan = keras.models.Model(inputs=z, outputs=D_G_z)
 gan.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
+generator_optimizer = tf.keras.optimizers.Adam(1e-4)
+discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+
 discriminator_losses = []
 generator_losses = []
 
-epochs = 2 
-batch_size = 32
+epochs =  1
+batch_size = 64
 
 X_train = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3',train_batch_size=batch_size)
+batches = 0
 
+
+checkpoint_dir = './training_checkpoints'
+checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,discriminator_optimizer=discriminator_optimizer,generator=generator,discriminator=discriminator)
+                                 
 for e in range(epochs):
   print(f'Epoch {e}')
+  start = time.time()
   for x_train,y_train in X_train:
+    
     noise = np.random.normal(0, 1, size=[batch_size, latent_dim])
     batch = x_train
     generated_images = generator.predict(noise)
@@ -120,7 +132,7 @@ for e in range(epochs):
 
     labels_discriminator = np.zeros(2*batch_size)
     labels_discriminator[:batch_size] = 1
-    print('.')
+    
     discriminator.trainable = True
     discriminator_loss = discriminator.train_on_batch(X, labels_discriminator)
 
@@ -131,10 +143,21 @@ for e in range(epochs):
     discriminator.trainable = False
 
     generator_loss = gan.train_on_batch(noise, labels_generator)
+    
+    batches += 1
+    print(batches)
+    if batches >= 144000 / batch_size:
+      break
+  print ('Time for epoch {} is {} sec'.format(e, time.time()-start))
+  if (e) % 2 == 0:
+    checkpoint.save(file_prefix = checkpoint_prefix)
+
+
 
   discriminator_losses.append(discriminator_loss)
   generator_losses.append(generator_loss)
 
+  
   # if e % 5 == 0:
   #   noise = np.random.normal(0, 1, size=[100, latent_dim])
   #   generatedImages = generator.predict(noise)

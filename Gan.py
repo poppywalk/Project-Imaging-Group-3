@@ -1,11 +1,14 @@
 # example of training an conditional gan on the fashion mnist dataset
 from numpy import expand_dims
 from numpy import zeros
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # or any {'0', '1', '2'}
 from numpy import ones
 from numpy.random import randn
 from numpy.random import randint
 from keras.datasets.fashion_mnist import load_data
 from keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model
 from keras.layers import Input
 from keras.layers import Dense
@@ -21,19 +24,7 @@ from keras.models import load_model
 from matplotlib import pyplot
 import tensorflow as tf
 
-# Limit memory of the GPU to 2 GB
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-  # Restrict TensorFlow to only allocate 2GB of memory on the first GPU
-  try:
-    tf.config.experimental.set_virtual_device_configuration(
-        gpus[0],
-        [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
-    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-  except RuntimeError as e:
-    # Virtual devices must be set before GPUs have been initialized
-    print(e)
+IMAGE_SIZE = 96 
 
 # define the standalone discriminator model
 def define_discriminator(in_shape=(28,28,1), n_classes=10):
@@ -45,7 +36,7 @@ def define_discriminator(in_shape=(28,28,1), n_classes=10):
 	n_nodes = in_shape[0] * in_shape[1]
 	li = Dense(n_nodes)(li)
 	# reshape to additional channel
-	li = Reshape((in_shape[0], in_shape[1], 1))(li)
+	li = Reshape((in_shape[0], in_shape[1], 1))(li)           
 	# image input
 	in_image = Input(shape=in_shape)
 	# concat label as a channel
@@ -100,7 +91,7 @@ def define_generator(latent_dim, n_classes=10):
 	# define model
 	model = Model([in_lat, in_label], out_layer)
 	return model
- 
+
 # define the combined generator and discriminator model, for updating the generator
 def define_gan(g_model, d_model):
 	# make weights in the discriminator not trainable
@@ -117,11 +108,35 @@ def define_gan(g_model, d_model):
 	opt = Adam(lr=0.0002, beta_1=0.5)
 	model.compile(loss='binary_crossentropy', optimizer=opt)
 	return model
- 
+
+def get_pcam_generators(base_dir, train_batch_size=32, val_batch_size=32):
+
+     # dataset parameters
+     train_path = os.path.join(base_dir, 'train+val', 'train')
+     valid_path = os.path.join(base_dir, 'train+val', 'valid')
+
+
+     RESCALING_FACTOR = 1./255
+
+     # instantiate data generators
+     datagen = ImageDataGenerator(rescale=RESCALING_FACTOR)
+
+     train_gen = datagen.flow_from_directory(train_path,
+                                             target_size=(IMAGE_SIZE, IMAGE_SIZE),
+                                             batch_size=train_batch_size,
+                                             class_mode='binary')
+
+     val_gen = datagen.flow_from_directory(valid_path,
+                                             target_size=(IMAGE_SIZE, IMAGE_SIZE),
+                                             batch_size=val_batch_size,
+                                             class_mode='binary',shuffle=False)
+
+     return train_gen, val_gen
+
 # load fashion mnist images
 def load_real_samples():
 	# load dataset
-	(trainX, trainy), (_, _) = load_data()
+	trainX, trainy= get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3')
 	# expand to 3d, e.g. add channels
 	X = expand_dims(trainX, axis=-1)
 	# convert from ints to floats
@@ -201,15 +216,8 @@ gan_model = define_gan(g_model, d_model)
 # load image data
 dataset = load_real_samples()
 # train model
-train(g_model, d_model, gan_model, dataset, latent_dim)
+# train(g_model, d_model, gan_model, dataset, latent_dim)
 
-# generate points in latent space as input for the generator
-def generate_latent_points(latent_dim, n_samples):
-	# generate points in the latent space
-	x_input = randn(latent_dim * n_samples)
-	# reshape into a batch of inputs for the network
-	x_input = x_input.reshape(n_samples, latent_dim)
-	return x_input
  
 # create and save a plot of generated images (reversed grayscale)
 def show_plot(examples, n):
@@ -224,7 +232,7 @@ def show_plot(examples, n):
 	pyplot.show()
  
 # load model
-model = load_model('generator.h5')
+model = load_model('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\Project-Imaging-Group-3\\cgan_generator.h5')
 # generate images
 latent_points = generate_latent_points(100, 100)
 # generate images
