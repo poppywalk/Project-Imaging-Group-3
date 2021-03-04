@@ -63,15 +63,15 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
      # (n,96,96,32)
      model.add(LeakyReLU(0.2))
      # (n,96,96,32)
-     #model.add(MaxPool2D(pool_size = pool_size))
-     model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
+     model.add(MaxPool2D(pool_size = pool_size))
+     #model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
      # (n,24,24,32)
      model.add(Conv2D(second_filters, kernel_size, padding = 'same'))
      # (n,24,24,64)
      model.add(LeakyReLU(0.2))
      # (n,24,24,64)
-     #model.add(MaxPool2D(pool_size = pool_size))
-     model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
+     model.add(MaxPool2D(pool_size = pool_size))
+     #model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
      # (n,6,6,64)
      model.add(Flatten())
      # (n,2304)
@@ -122,8 +122,8 @@ D = discriminator(x)
 gan = keras.models.Model(inputs=z, outputs=D)
 gan.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
-generator_optimizer = tf.keras.optimizers.Adam(1e-4)
-discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+# generator_optimizer = tf.keras.optimizers.Adam(1e-4)
+# discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 
 discriminator_losses = []
 generator_losses = []
@@ -137,7 +137,7 @@ batches = 0
 
 checkpoint_dir = './training_checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,discriminator_optimizer=discriminator_optimizer,generator=generator,discriminator=discriminator)
+checkpoint = tf.train.Checkpoint(generator=generator,discriminator=discriminator)
                                  
 for e in range(epochs):
   print(f'Epoch {e}')
