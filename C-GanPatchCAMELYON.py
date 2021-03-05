@@ -12,18 +12,18 @@ from tensorflow.keras.models import Sequential
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Limit memory of the GPU to 2 GB
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-  # Restrict TensorFlow to only allocate 2GB of memory on the first GPU
-  try:
-    tf.config.experimental.set_virtual_device_configuration(
-        gpus[0],
-        [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
-    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-  except RuntimeError as e:
-    # Virtual devices must be set before GPUs have been initialized
-    print(e)
+# gpus = tf.config.experimental.list_physical_devices('GPU')
+# if gpus:
+#   # Restrict TensorFlow to only allocate 2GB of memory on the first GPU
+#   try:
+#     tf.config.experimental.set_virtual_device_configuration(
+#         gpus[0],
+#         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+#     logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+#     print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+#   except RuntimeError as e:
+#     # Virtual devices must be set before GPUs have been initialized
+#     print(e)
 
 latent_dim = 100
 IMAGE_SIZE = 96 
@@ -57,30 +57,31 @@ def get_pcam_generators(base_dir, train_batch_size=32):
 
 def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64,third_filters=32,fourth_filters=64):
 
-     model = Sequential() 
+     input_layer = keras.layers.Input(shape = (IMAGE_SIZE,IMAGE_SIZE,3))
      # (n,96,96,3)
-     model.add(Conv2D(first_filters, kernel_size, padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3))) 
+     First_layer = Conv2D(first_filters, kernel_size, padding = 'same')(input_layer) 
      # (n,96,96,32)
-     model.add(LeakyReLU(0.2))
+     First_Leaky_relu= LeakyReLU(0.2)(First_layer)
      # (n,96,96,32)
-     model.add(MaxPool2D(pool_size = pool_size))
+     First_Max_Pool = MaxPool2D(pool_size = pool_size)(First_Leaky_relu)
      #model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
      # (n,24,24,32)
-     model.add(Conv2D(second_filters, kernel_size, padding = 'same'))
-     # (n,24,24,64)
-     model.add(LeakyReLU(0.2))
-     # (n,24,24,64)
-     model.add(MaxPool2D(pool_size = pool_size))
+     Second_layer = Conv2D(first_filters, kernel_size, padding = 'same')(First_Max_Pool) 
+     # (n,24,24,32)
+     Second_Leaky_relu= LeakyReLU(0.2)(Second_layer)
+     # (n,24,24,32)
+     Second_Max_Pool = MaxPool2D(pool_size = pool_size)(Second_Leaky_relu)
      #model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
      # (n,6,6,64)
-     model.add(Flatten())
+     Flatten = keras.layers.Flatten()(Second_Max_Pool)
      # (n,2304)
-     model.add(Dense(64))
+     Dense_1 = Dense(64)(Flatten)
      # (n,64)
-     model.add(LeakyReLU(0.2))
+     Third_Leaky_relu = LeakyReLU(0.2)(Dense_1)
      # (n,64)
-     model.add(Dense(1, activation = 'sigmoid'))
+     output1 = Dense(1, activation = 'sigmoid')(Third_Leaky_relu)
      # (n,1)
+     model = keras.Model(inputs=input_layer,outputs=output1)
      return model
 
 def Generator():
@@ -131,7 +132,7 @@ generator_losses = []
 epochs =  1
 batch_size = 64
 
-X_train = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3',train_batch_size=batch_size)
+X_train = get_pcam_generators(r"C:\Users\20174069\Desktop\Project imaging",train_batch_size=batch_size)
 batches = 0
 
 checkpoint_dir = './training_checkpoints'
