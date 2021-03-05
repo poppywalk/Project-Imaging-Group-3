@@ -112,8 +112,8 @@ generator = Generator()
 discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
-# discriminator.summary()
-# generator.summary()
+discriminator.summary()
+generator.summary()
 
 discriminator.trainable = False
 z = keras.layers.Input(shape=(latent_dim,))
