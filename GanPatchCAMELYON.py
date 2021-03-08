@@ -1,8 +1,11 @@
+# Goodfellow,  I.,  Bengio,  Y.,  and  Courville,  A.  (2016).Deep  Learning.MIT  Press.http://www.deeplearningbook.org
+
 import keras
 import os
 import time
 import numpy as np
 import tensorflow as tf
+import 
 import matplotlib.pyplot as plt 
 from keras.layers.convolutional import Conv2D, UpSampling2D
 from tensorflow.keras.layers import Dense, Flatten, LeakyReLU, Dropout, Reshape, Conv2D, MaxPool2D
@@ -139,39 +142,64 @@ checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(generator=generator,discriminator=discriminator)
                                  
 for epoch in range(epochs):
+
   print(f'Epoch {epoch}')
   start = time.time()
+
   for x_train,y_train in X_train:
-    
-    noise = np.random.normal(0, 1, size=[batch_size, latent_dim])
-    batch = x_train
-    generated_images = generator.predict(noise)
-    X = np.concatenate([batch, generated_images])
+    #  generate random input for the generator from normal distribition (z in Goodfellow et al. 2016)
+    geninput = np.random.normal(0, 1, size=[batch_size, latent_dim])
+   
+    # use the generator to generate new random images from the generator input
+    generated_images = generator.predict(geninput)
+
+    # concatenate the real images with the generated images, dataset with the real images followed by the fake images 
+    X = np.concatenate([x_train, generated_images])
+
+    # label the dataset, so 2 times labels of size batch_size for the generated images and the real ones
     labels_discriminator = np.zeros(2*batch_size)
+
+    # label the real images with 1 and leave the fake to 0
     labels_discriminator[:batch_size] = 1
     
+    # set the discriminator weights to trainable, so it can be trained
     discriminator.trainable = True
+
+    # train the discriminator, and output the value of the loss function
     discriminator_loss = discriminator.train_on_batch(X, labels_discriminator)
 
-    noise = np.random.normal(0, 1, size=[batch_size, latent_dim])
+    #  generate new input for the generator from normal distribition (z in Goodfellow et al. 2016)
+    geninput = np.random.normal(0, 1, size=[batch_size, latent_dim])
 
+    # generate ones for labels for generator
     labels_generator = np.ones(batch_size)
 
+    # fix the discriminator weights before training the generator, otherwise the discriminator will keep on trying to train
     discriminator.trainable = False
 
-    generator_loss = gan.train_on_batch(noise, labels_generator)
+    # train the generator, and output the value of the loss function
+    generator_loss = gan.train_on_batch(geninput, labels_generator)
     
+    # add one to the batches, so it moves to the next
     batches += 1
+
+    # print the batch number that is completed, to see if the training works
     print(batches)
-    if batches >= 144000 / batch_size:
+
+    # make sure the training stops if all batches are done (imagedatagenerator loops infinitely)
+    if batches >= 144000 // batch_size:
       break
+  # print the epoch and how much time was needed to do the epoch
   print ('Time for epoch {} is {} sec'.format(e, time.time()-start))
+
+  # save the checkpoints every 2 epochs
   if (e) % 2 == 0:
     checkpoint.save(file_prefix = checkpoint_prefix)
-
-
+  
+  # add the loss, comes in handy for plotting and checking that the generator and discriminator have the same learning speed
   discriminator_losses.append(discriminator_loss)
 
+  # add the loss, comes in handy for plotting and checking that the generator and discriminator have the same learning speed
   generator_losses.append(generator_loss)
 
   
@@ -179,9 +207,6 @@ for epoch in range(epochs):
     noise = np.random.normal(0, 1, size=[100, latent_dim])
     generatedImages = generator.predict(noise)
     generatedImages = generatedImages.reshape(100, 96, 96, 3)          
-    plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(epoch))
-    # display.display(plt.gcf())
-    # display.clear_output(wait=True)
-    # time.sleep(0.001)    
+    plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(epoch))   
     saveModels(epoch)
 
