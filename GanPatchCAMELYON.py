@@ -171,7 +171,7 @@ for epoch in range(epochs):
     #  generate new input for the generator from normal distribition (z in Goodfellow et al. 2016)
     geninput = np.random.normal(0, 1, size=[batch_size, latent_dim])
 
-    # generate ones for labels for generator
+    # generate ones for labels for generator for the loss function
     labels_generator = np.ones(batch_size)
 
     # fix the discriminator weights before training the generator, otherwise the discriminator will keep on trying to train
@@ -198,8 +198,6 @@ for epoch in range(epochs):
   
   # add the loss, comes in handy for plotting and checking that the generator and discriminator have the same learning speed
   discriminator_losses.append(discriminator_loss)
-
-  # add the loss, comes in handy for plotting and checking that the generator and discriminator have the same learning speed
   generator_losses.append(generator_loss)
 
   
@@ -209,4 +207,9 @@ for epoch in range(epochs):
     generatedImages = generatedImages.reshape(100, 96, 96, 3)          
     plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(epoch))   
     saveModels(epoch)
+  # save model every epoch
+  gan.save_weights('gan_weights/gan.hdf5')
+  generator.save_weights('gan_weights/generator.hdf5')
+  discriminator.save_weights('gan_weights/discriminator.hdf5')
+
 
