@@ -116,10 +116,10 @@ discriminator.summary()
 generator.summary()
 
 discriminator.trainable = False
-z = keras.layers.Input(shape=(latent_dim,))
-x = generator(z)
-D = discriminator(x)
-gan = keras.models.Model(inputs=z, outputs=D)
+Input = keras.layers.Input(shape=(latent_dim,))
+OutputGenerator = generator(Input)
+OutputDiscriminator = discriminator(OutputGenerator)
+gan = keras.models.Model(inputs=Input, outputs=OutputDiscriminator)
 gan.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
 # generator_optimizer = tf.keras.optimizers.Adam(1e-4)
@@ -128,7 +128,7 @@ gan.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.000
 discriminator_losses = []
 generator_losses = []
 
-epochs =  1
+epochs =  10
 batch_size = 64
 
 X_train = get_pcam_generators('C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3',train_batch_size=batch_size)
@@ -146,9 +146,7 @@ for e in range(epochs):
     noise = np.random.normal(0, 1, size=[batch_size, latent_dim])
     batch = x_train
     generated_images = generator.predict(noise)
-
     X = np.concatenate([batch, generated_images])
-
     labels_discriminator = np.zeros(2*batch_size)
     labels_discriminator[:batch_size] = 1
     
@@ -172,18 +170,18 @@ for e in range(epochs):
     checkpoint.save(file_prefix = checkpoint_prefix)
 
 
-
   discriminator_losses.append(discriminator_loss)
+
   generator_losses.append(generator_loss)
 
   
-  # if e % 5 == 0:
-  #   noise = np.random.normal(0, 1, size=[100, latent_dim])
-  #   generatedImages = generator.predict(noise)
-  #   generatedImages = generatedImages.reshape(100, 96, 96, 3)          
-  #   plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(e))
-  #   display.display(plt.gcf())
-  #   display.clear_output(wait=True)
-  #   time.sleep(0.001)    
-  #   saveModels(e)
+  if e % 5 == 0:
+    noise = np.random.normal(0, 1, size=[100, latent_dim])
+    generatedImages = generator.predict(noise)
+    generatedImages = generatedImages.reshape(100, 96, 96, 3)          
+    plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(e))
+    # display.display(plt.gcf())
+    # display.clear_output(wait=True)
+    # time.sleep(0.001)    
+    saveModels(e)
 

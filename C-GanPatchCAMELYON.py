@@ -11,19 +11,19 @@ from tensorflow.keras.models import Sequential
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# Limit memory of the GPU to 2 GB
-# gpus = tf.config.experimental.list_physical_devices('GPU')
-# if gpus:
-#   # Restrict TensorFlow to only allocate 2GB of memory on the first GPU
-#   try:
-#     tf.config.experimental.set_virtual_device_configuration(
-#         gpus[0],
-#         [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
-#     logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-#     print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
-#   except RuntimeError as e:
-#     # Virtual devices must be set before GPUs have been initialized
-#     print(e)
+#Limit memory of the GPU to 2 GB
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  # Restrict TensorFlow to only allocate 2GB of memory on the first GPU
+  try:
+    tf.config.experimental.set_virtual_device_configuration(
+        gpus[0],
+        [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+  except RuntimeError as e:
+    # Virtual devices must be set before GPUs have been initialized
+    print(e)
 
 latent_dim = 100
 IMAGE_SIZE = 96 
@@ -37,7 +37,6 @@ def plotImages(images, dim=(10, 10), figsize=(10, 10), title=''):
     plt.tight_layout()
     plt.suptitle(title)
     plt.show()
-
 
 def get_pcam_generators(base_dir, train_batch_size=32):
 
@@ -132,7 +131,7 @@ generator_losses = []
 epochs =  1
 batch_size = 64
 
-X_train = get_pcam_generators(r"C:\Users\20174069\Desktop\Project imaging",train_batch_size=batch_size)
+X_train = get_pcam_generators(r'C:\\Users\\Kirst\\Desktop\\TUe\\8P361-Project Imaging\\Project-Imaging-Group-3',train_batch_size=batch_size)
 batches = 0
 
 checkpoint_dir = './training_checkpoints'

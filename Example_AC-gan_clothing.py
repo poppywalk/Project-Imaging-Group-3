@@ -62,9 +62,11 @@ def define_discriminator(in_shape=(28,28,1), n_classes=10):
  opt = Adam(lr=0.0002, beta_1=0.5)
  model.compile(loss=['binary_crossentropy', 'sparse_categorical_crossentropy'], optimizer=opt)
  return model
- 
+
+latent_dim=100
+
 # define the standalone generator model
-def define_generator(latent_dim, n_classes=10):
+def define_generator(latent_dim=100, n_classes=10):
  # weight initialization
  init = RandomNormal(stddev=0.02)
  # label input
@@ -95,7 +97,12 @@ def define_generator(latent_dim, n_classes=10):
  # define model
  model = Model([in_lat, in_label], out_layer)
  return model
- 
+
+discriminator = define_discriminator()
+generator = define_generator()
+
+discriminator.summary()
+generator.summary()
 # define the combined generator and discriminator model, for updating the generator
 def define_gan(g_model, d_model):
  # make weights in the discriminator not trainable
