@@ -39,7 +39,7 @@ def plotImages(images, dim=(10, 10), figsize=(10, 10), title=''):
   """
   Function that plots images
   Parameters: images, a collection of images,
-          dim, the dimensions of 
+          dim, the dimensions of the subplot
           figsize, the figure size
           title, the title of the generated plot
   returns: A plot of the images
@@ -239,7 +239,6 @@ def train(generator,discriminator,gan,X_train,latent_dim,epochs,batch_size):
 # RunOnGPU()
 #Loading in the training data
 X_train = get_pcam_generators(r"C:\Users\20174069\Desktop\Project imaging",train_batch_size=64)
-
 
 #training the model
 train(generator=Generator(),discriminator=Discriminator(),gan=Gan(),X_train=X_train,latent_dim=latent_dim, epochs =  1, batch_size = 64)
