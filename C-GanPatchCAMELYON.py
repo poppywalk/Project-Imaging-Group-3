@@ -50,7 +50,7 @@ def plotImages(images, dim=(10, 10), figsize=(10, 10), title=''):
       plt.imshow(images[i], interpolation='nearest')
       plt.axis('off')
   plt.tight_layout()
-  plt.suptitle(title)
+  plt.subtitle(title)
   plt.show()
 
 def get_pcam_generators(base_dir, train_batch_size=32):
