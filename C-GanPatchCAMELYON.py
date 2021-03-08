@@ -109,6 +109,7 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
   output1 = Dense(1, activation = 'sigmoid')(Third_Leaky_relu)
   # (n,1)
   discriminator = keras.Model(inputs=input_layer,outputs=output1)
+  #Compile the model by specifying the loss and optimizer
   discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
   return discriminator
 
@@ -140,8 +141,8 @@ def Generator():
   # (n,96,96,64)
   generator.add(Conv2D(3, kernel_size=(3, 3), padding='same', activation='tanh'))
   # (n,96,96,3)
+  #Compile the model by specifying the loss and optimizer
   generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
-
   return generator
 
 
@@ -166,7 +167,6 @@ def Gan(latent_dim=100):
   return gan
 # generator_optimizer = tf.keras.optimizers.Adam(1e-4)
 # discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
-# gan = gan(latent_dim=latent_dim)
 
 #functies om toe te voegen 
 #Generate real samples
@@ -179,7 +179,7 @@ def train(generator,discriminator,gan,X_train,latent_dim,epochs,batch_size):
   Parameters: generator, the generator model
               discriminator, the discriminator model
               gan, the gan model
-              dataset, the dataset
+              X_train, the training dataset
               latent_dim, 
               N_epochs, the amount of epochs the model will train for
               batch_size, the amount of images per batch
