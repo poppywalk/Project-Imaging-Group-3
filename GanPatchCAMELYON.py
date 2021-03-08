@@ -112,8 +112,8 @@ generator = Generator()
 discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
-discriminator.summary()
-generator.summary()
+# discriminator.summary()
+# generator.summary()
 
 discriminator.trainable = False
 Input = keras.layers.Input(shape=(latent_dim,))
@@ -138,8 +138,8 @@ checkpoint_dir = './training_checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(generator=generator,discriminator=discriminator)
                                  
-for e in range(epochs):
-  print(f'Epoch {e}')
+for epoch in range(epochs):
+  print(f'Epoch {epoch}')
   start = time.time()
   for x_train,y_train in X_train:
     
@@ -175,13 +175,13 @@ for e in range(epochs):
   generator_losses.append(generator_loss)
 
   
-  if e % 5 == 0:
+  if epoch % 5 == 0:
     noise = np.random.normal(0, 1, size=[100, latent_dim])
     generatedImages = generator.predict(noise)
     generatedImages = generatedImages.reshape(100, 96, 96, 3)          
-    plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(e))
+    plotImages((generatedImages+1.0)/2.0, title='Epoch {}'.format(epoch))
     # display.display(plt.gcf())
     # display.clear_output(wait=True)
     # time.sleep(0.001)    
-    saveModels(e)
+    saveModels(epoch)
 
