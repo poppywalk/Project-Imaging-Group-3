@@ -29,11 +29,14 @@ if gpus:
     # Virtual devices must be set before GPUs have been initialized
     print(e)
 
+# define some variables
 latent_dim = 100
 IMAGE_SIZE = 96 
 epochs =  10
 batch_size = 64
 batches = 0
+
+# make two empty lists to add losses to 
 discriminator_losses = []
 generator_losses = []
 
@@ -66,13 +69,16 @@ def get_pcam_generators(base_dir, train_batch_size=32):
 
   Returns: train_gen: directoryiterater of the training data
   """
-
+  # dataset parameters
   train_path = os.path.join(base_dir, 'train+val', 'train')
-     
+
+  # define the rescaling factor for the ImageDataGenerator class 
   RESCALING_FACTOR = 1./255
 
+  # instantiate data generators
   datagen = ImageDataGenerator(rescale=RESCALING_FACTOR)
 
+  # collect the training data
   train_gen = datagen.flow_from_directory(train_path,
                                           target_size=(IMAGE_SIZE, IMAGE_SIZE),
                                           batch_size=train_batch_size,
@@ -80,77 +86,110 @@ def get_pcam_generators(base_dir, train_batch_size=32):
 
   return train_gen
 
-def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64,third_filters=32,fourth_filters=64):
+def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64,third_filters=32,fourth_filters=64,negativeslopecoefficient=0.2):
   """
   The discriminator is a Neural network that determines if the generated images are real or fake thereby updating the generator.
 
-  Inputs: kernel_size: tuple which shows the size of the convolutional kernel
-          pool_size: integer which shows the size of the max pooling kernel
-          first/second/third/fourth_filters: integers which show the amount of neurons
+  Inputs: kernel_size: tuple which shows the size of the convolutional kernel, default is (3,3)
+          pool_size: integer which shows the size of the max pooling kernel, default is (4,4)
+          first/second/third/fourth_filters: integers which show the amount of neurons, default is 32,64,32,64 respectively
+          negativeslopecoefficient: float which shows the value of the slope coefficient for the Leaky ReLU layer, default is 0.2
 
   Returns: keras sequential model of the discriminator model
   """
+  # begin the build of the model 
+  discriminator_model = Sequential() 
+  # add the first layer, a convolutional layer
+  # input for this layer looks like this: (n,96,96,3)
+  discriminator_model.add(Conv2D(first_filters, kernel_size, padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3))) 
+  # add a leaky ReLU layer which allows a small gradient when the unit is not active
+  # input for this layer looks like this (output of the first convolutional layer): (n,96,96,32)
+  discriminator_model.add(LeakyReLU(negativeslopecoefficient))
+  # add a maxpooling layer
+  # input for this layer looks like this (output of the first Leaky ReLU layer):(n,96,96,32)
+  discriminator_model.add(MaxPool2D(pool_size = pool_size))
+  # add a second convolutional layer to the model
+  # input for this layer looks like this (output of the first maxpooling layer): (n,24,24,32)
+  discriminator_model.add(Conv2D(second_filters, kernel_size, padding = 'same'))
+  # add another leaky ReLU, which allows a small gradient when the unit is not active
+  # input for this layer looks like this (output of the second convolutional layer): (n,24,24,64)
+  discriminator_model.add(LeakyReLU(negativeslopecoefficient))
+  # add another maxpooling layer
+  # input for this layer looks like this (output of the second Leaky ReLU): (n,24,24,64)
+  discriminator_model.add(MaxPool2D(pool_size = pool_size))
+  # flatten the output of the second maxpooling layer (n,6,6,64)
+  discriminator_model.add(Flatten())
+  # add a dense layer to downscale
+  # input for this layer looks like this (output of flatten):(n,2304)
+  discriminator_model.add(Dense(64))
+  # add another Leaky ReLU, which allows a small gradient when the unit is not active
+  # input for this layer looks like this (output of the first dense layer): (n,64)
+  discriminator_model.add(LeakyReLU(negativeslopecoefficient))
+  # add nother dense layer to downscale even more, use sigmoid which returns a value close to zero for small values,
+  # and for large values the result of the function gets close to 1.
+  # input for this layer looks like this (output of the third Leaky ReLU): (n,64)
+  discriminator_model.add(Dense(1, activation = 'sigmoid'))
+  # output of the last dense layer: (n,1)
+  # model is built, now compile with an optimizer.
+  # using the stochastic gradient descent method that is based on adaptive estimation of first-order and second-order moments
+  discriminator_model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
+  return discriminator_model
 
-  model = Sequential() 
-  # (n,96,96,3)
-  model.add(Conv2D(first_filters, kernel_size, padding = 'same', input_shape = (IMAGE_SIZE, IMAGE_SIZE, 3))) 
-  # (n,96,96,32)
-  model.add(LeakyReLU(0.2))
-  # (n,96,96,32)
-  model.add(MaxPool2D(pool_size = pool_size))
-  #model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
-  # (n,24,24,32)
-  model.add(Conv2D(second_filters, kernel_size, padding = 'same'))
-  # (n,24,24,64)
-  model.add(LeakyReLU(0.2))
-  # (n,24,24,64)
-  model.add(MaxPool2D(pool_size = pool_size))
-  #model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
-  # (n,6,6,64)
-  model.add(Flatten())
-  # (n,2304)
-  model.add(Dense(64))
-  # (n,64)
-  model.add(LeakyReLU(0.2))
-  # (n,64)
-  model.add(Dense(1, activation = 'sigmoid'))
-  # (n,1)
-  model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
-  return model
-
-def Generator():
+def Generator(units=128*12*12, negativeslopecoefficient=0.2,size1=(2,2),size2=(4,4),kernel_size=(3, 3),genfirstfilters=64,gensecondfilters=3):
   """
   The Generator is a neural network that generates fake images
 
-  Inputs: none
+  Inputs: units: integer which shows the amount of units for the first dense layer, default is 128*12*12
+          negativeslopecoefficient: float which shows the value of the slope coefficient for the Leaky ReLU layer, default is 0.2
+          size1: tuple which shows the upsampling factors for rows and columns for the first UpSampling2D layer, default is (2,2)
+          size2: tuple which shows the upsampling factors for rows and columns for the second UpSampling2D layer, default is (4,4)
+          kernel_size: tuple which shows the size of the convolutional kernel, default is (3,3)
+          genfirstfilters, gensecondfilters: integers which show the amount of neurons, default is 64,3 respectively 
+
 
   Returns: keras sequential model of the generator model
   """
-  generator = keras.models.Sequential()
-  # 
-  generator.add(Dense(128*12*12, input_dim=latent_dim, kernel_initializer=keras.initializers.RandomNormal(stddev=0.02)))
-  # (n,18432)
-  generator.add(LeakyReLU(0.2))
-  # (n,18342)
-  generator.add(Reshape((12,12,128)))
-  # (n,12,12,128)
-  generator.add(UpSampling2D(size=(2, 2)))
+  # begin the build of the model 
+  generator_model = keras.models.Sequential()
+  # add a dense layer 
+  # input for this layer looks like this:(n,latent_dim)
+  generator_model.add(Dense(units, input_dim=latent_dim, kernel_initializer=keras.initializers.RandomNormal(stddev=0.02)))
+  # add a Leaky ReLU, which allows a small gradient when the unit is not active
+  # the input for this layer is (the output of the first dense layer): (n,18432)
+  generator_model.add(LeakyReLU(negativeslopecoefficient))
+  # add a reshape layer to shape the data
+  # the input for this layer is (the output of the first LeakyReLU): (n,18342)
+  generator_model.add(Reshape((12,12,128)))
+  # add an UpSampling layer to repeat the rows and columns of the data by size[0] and size[1] respectively
+  # the input to this layer is (the output of the Reshape layer): (n,12,12,128)
+  generator_model.add(UpSampling2D(size1))
   # Conv2DTranspose can be used as well but is slower
-  # (n,24,24,128)
-  generator.add(Conv2D(64, kernel_size=(3, 3), padding='same'))
-  # (n,24,24,64)
-  generator.add(LeakyReLU(0.2))
-  # (n,24,24,64)
-  generator.add(UpSampling2D(size=(4, 4)))
+  # add a Convolutional layer
+  # the input for this layer is (the output of the UpSampling layer): (n,24,24,128)
+  generator_model.add(Conv2D(genfirstfilters, kernel_size, padding='same'))
+  # add another LeakyReLU layer, which allows a small gradient when the unit is not active
+  # the input of this layer is (the output of the first Convolutional layer): (n,24,24,64)
+  generator_model.add(LeakyReLU(negativeslopecoefficient))
+  # add another UpSampling layer with a bigger size,it repeats the rows and columns of the data by size[0] and size[1] respectively 
+  # the input for this layer is (the output of the second LeakyReLU): (n,24,24,64)
+  generator_model.add(UpSampling2D(size2))
   # Conv2DTranspose can be used as well but is slower
-  # (n,96,96,64)
-  generator.add(Conv2D(3, kernel_size=(3, 3), padding='same', activation='tanh'))
-  # (n,96,96,3)
-  generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
-  return generator
+  # add another Convolutional layer
+  # the input for this layer is (the output of the last UpSampling layer): (n,96,96,64)
+  generator_model.add(Conv2D(gensecondfilters, kernel_size, padding='same', activation='tanh'))
+  # output of the last Convolutional layer: (n,96,96,3)
+  # model is built, now compile with an optimizer.
+  # using the stochastic gradient descent method that is based on adaptive estimation of first-order and second-order moments
+  generator_model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
+  
+  return generator_model
+
+
 
 discriminator = Discriminator()
 generator = Generator()
+
+generator.summary()
 
 def Get_Gan(discriminator=discriminator, generator=generator,latent_dim=latent_dim):
   """
