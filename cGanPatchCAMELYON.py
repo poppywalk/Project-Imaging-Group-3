@@ -88,40 +88,64 @@ def get_pcam_generators(base_dir, train_batch_size=32):
 
 def Generator(latent_dim=100):
   """
-  The discriminator is a Neural network that determines if the generated images are real or fake thereby updating the generator.
-  Inputs: kernel_size: The size of the convolutional kernel
-          pool_size: The size of the max pooling kernel
-          first/second/third/fourth_filters:
-  Returns: discriminator, the discriminator model
+  The Generator is a neural network that generates fake images
+
+  Inputs: latent_dim = integer, which shows the size of the latent dimension. 
+          the latent dimension is the space with possible inputs for the generator. 
+          every vector in the latent dimension gives a certain image which the generator can make.
+          default is 100, which means it is 100 dimensional, more dimensions would give more complexity.
+
+  Returns: keras sequential model of the generator model
   """
+  # first input for the images
+  # input shape as big as the latent dimension (n,100)
   images_input = Input(shape = (latent_dim,))
+  # add Dense layer for the input shape (n,18432)
   images_dense = Dense(128*12*12, input_dim=latent_dim, kernel_initializer=keras.initializers.RandomNormal(stddev=0.02))(images_input)
+  # add a LeakyReLU layer (n,18432)
   images_leakyrelu = LeakyReLU(alpha=0.2)(images_dense)
+  # add a Reshape layer to get the wanted output structure (n,12,12,128)
   images_reshape = Reshape((12,12,128))(images_leakyrelu)
 
+  # second input for the labels
+  # input shape for the labels (an array) (n,1)
   labels_input = Input(shape=(1,))
+  # add an Embedding layer, converts the label to a latent space vector (n,1,50)
   labels_embedding = Embedding(2, 50)(labels_input)
+  # add a Dense layer (n,1,432)
   labels_dense = Dense(12*12*3)(labels_embedding)
+  # add a Reshape layer to convert to the wanted structure (n,12,12,3)
   labels_reshape = Reshape((12,12,3))(labels_dense)
 
+  # merge the two models into one
   merge = Concatenate()([images_reshape, labels_reshape])
   
-  # Upsample to (24,24)
+  # upsample to (24,24)
+  # add a Conv2DTranspose to upsample (n,24,24,128)
   upsample1 = Conv2DTranspose(128, (4,4), strides=(2,2), padding='same')(merge)
+  # add a Leaky ReLU layer to activate it (Leaky ReLU is not a standard activation) (n,24,24,128)
   leakyrelu1 = LeakyReLU(alpha=0.2)(upsample1)
 
-  # Upsample to (48,48)
+  # upsample to (48,48)
+  # add a Conv2DTranspose to upsample (n,48,48,128)
   upsample2 = Conv2DTranspose(128, (4,4), strides=(2,2), padding='same')(leakyrelu1)
+  # add a Leaky ReLU layer to activate it (Leaky ReLU is not a standard activation) (n,48,48,128)
   leakyrelu2 = LeakyReLU(alpha=0.2)(upsample2)
 
-  # Upsample to (96,96)
+  # upsample to (96,96)
+  # add a Conv2DTranspose to upsample (n,96,96,128)
   upsample3 = Conv2DTranspose(128, (4,4), strides=(2,2), padding='same')(leakyrelu2)
+  # add a Leaky ReLU layer to activate it (Leaky ReLU is not a standard activation) (n,96,96,128)
   leakyrelu3 = LeakyReLU(alpha=0.2)(upsample3)
 
-  # Output
+  # output
+  # add a convolutional layer for the output (n,96,96,3)
   out_layer = Conv2D(3, (3, 3), padding='same', activation='tanh')(leakyrelu3)
 
+  # make the model
   generator = Model([images_input, labels_input], out_layer)
+
+  # compile the model
   generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
   return generator
@@ -132,46 +156,57 @@ generator.summary()
 def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_filters=64,third_filters=32,fourth_filters=64):
   """
   The discriminator is a Neural network that determines if the generated images are real or fake thereby updating the generator.
-  Inputs: kernel_size: The size of the convolutional kernel
-          pool_size: The size of the max pooling kernel
-          first/second/third/fourth_filters:
-  Returns: discriminator, the discriminator model
+
+  Inputs: kernel_size: tuple which shows the size of the convolutional kernel, default is (3,3)
+          pool_size: integer which shows the size of the max pooling kernel, default is (4,4)
+          first/second/third/fourth_filters: integers which show the amount of neurons, default is 32,64,32,64 respectively
+          negativeslopecoefficient: float which shows the value of the slope coefficient for the Leaky ReLU layer, default is 0.2
+
+  Returns: keras sequential model of the discriminator model
   """
+
+  # input shape for the labels (an array) (n,1)     
   labels_input = Input(shape=(1,))
+  # add an Embedding layer, converts the label to a latent space vector (n,1,50)
   labels_embedding = Embedding(2, 50)(labels_input)
+  # add a Dense layer (n,1,27648)
   labels_dense = Dense(96*96*3)(labels_embedding)
+  # add a Reshape layer to convert to the wanted structure (n,96,96,3)
   labels_reshape = Reshape((96,96,3))(labels_dense)
 
+  # define the input shape (n,96,96,3)
   images_input = Input(shape=(96,96,3))
 
+  # merge the images and the labels 
   merge = Concatenate()([images_input, labels_reshape])
 
-  # (n,96,96,3)
+  # add a convolutional layer (input =(n,96,96,3))
   First_layer = Conv2D(first_filters, kernel_size, padding = 'same')(merge) 
-  # (n,96,96,32)
+  # add a Leaky ReLU layer to activate it (Leaky ReLU is not a standard activation) (input =(n,96,96,32))
   First_Leaky_relu= LeakyReLU(0.2)(First_layer)
-  # (n,96,96,32)
-  #The max pooling or strided convolutional layer scales the images down with a factor of 4
+  # (input =(n,96,96,32))
+  # the max pooling or strided convolutional layer scales the images down with a factor of 4
   First_Max_Pool = MaxPool2D(pool_size = pool_size)(First_Leaky_relu)
-  #model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
-  # (n,24,24,32)
+  # add a convolutional layer (input =(n,24,24,32))
   Second_layer = Conv2D(first_filters, kernel_size, padding = 'same')(First_Max_Pool) 
-  # (n,24,24,32)
+  # add a Leaky ReLU layer to activate it (Leaky ReLU is not a standard activation) (input =(n,24,24,32))
   Second_Leaky_relu= LeakyReLU(0.2)(Second_layer)
-  # (n,24,24,32)
-  #The max pooling or strided convolutional layer scales the images down with a factor of 4
+  # the max pooling or strided convolutional layer scales the images down with a factor of 4 (input =(n,24,24,32))
   Second_Max_Pool = MaxPool2D(pool_size = pool_size)(Second_Leaky_relu)
-  #model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
-  # (n,6,6,64)
+  # flatten the output of the Max Pooling layer (input =(n,6,6,64))
   Flatten = keras.layers.Flatten()(Second_Max_Pool)
-  # (n,2304)
+  # add a Dense layer (input =(n,2304))
   Dense_1 = Dense(64)(Flatten)
-  # (n,64)
+  # add a Leaky ReLU layer to activate it (Leaky ReLU is not a standard activation) (input =(n,64))
   Third_Leaky_relu = LeakyReLU(0.2)(Dense_1)
-  # (n,64)
+  # add Dense layer for the output (input = (n,64))
   output1 = Dense(1, activation = 'sigmoid')(Third_Leaky_relu)
-  # (n,1)
+  # (output =(n,1))
+
+  # make the model
   discriminator = Model(inputs=[images_input, labels_input],outputs=output1)
+
+  # compile the model
   discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
 
   return discriminator
@@ -187,13 +222,15 @@ def Get_Gan(discriminator, generator,latent_dim=latent_dim):
               discriminator: keras sequential model 
               generator: keras sequential model
 
-  Returns: Gan: model
+  Returns: gan: model
   """
   discriminator.trainable = False
   gen_noise, gen_labels = generator.input
   
   OutputGenerator = generator.output
+  # use both outputs of the discriminator
   OutputDiscriminator = discriminator([OutputGenerator, gen_labels])
+  # use both outputs of the generator in the GAN
   gan = keras.models.Model(inputs=[gen_noise, gen_labels], outputs=OutputDiscriminator)
   gan.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
   return gan
@@ -222,7 +259,9 @@ def Train_Gan(epochs=epochs,X_train=X_train,batch_size=batch_size,latent_dim=lat
     batches = 0 
     for x_train,y_train in X_train:
       # generate random input for the generator from normal distribition (z in Goodfellow et al. 2016)
+      # batch_size is the amount of images we want to have
       geninput = np.random.normal(0, 1, size=[batch_size, latent_dim])
+      # half of the images are made to be 0 half are 1
       genlabels = np.zeros((batch_size,))
       genlabels[:batch_size//2] = 1
       np.random.shuffle(genlabels)
