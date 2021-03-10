@@ -79,7 +79,7 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
   The discriminator is a Neural network that determines if the generated images are real or fake thereby updating the generator.
   Inputs: kernel_size: The size of the convolutional kernel
           pool_size: The size of the max pooling kernel
-          first/second/third/fourth_filters:
+          first/second/third/fourth_filters: The amount of neurons in a layer
   Returns: discriminator, the discriminator model
   """
   input_layer = keras.layers.Input(shape = (IMAGE_SIZE,IMAGE_SIZE,3))
@@ -116,7 +116,7 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
 def Generator():
   """
   The Generator is a neural network that generates fake images
-    Inputs: none
+    Parameters: none
     Returns: generator, the generator model
   """
   generator = keras.models.Sequential()
