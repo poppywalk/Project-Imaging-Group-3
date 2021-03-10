@@ -146,7 +146,6 @@ def Generator(units=128*12*12, negativeslopecoefficient=0.2,size1=(2,2),size2=(4
           kernel_size: tuple which shows the size of the convolutional kernel, default is (3,3)
           genfirstfilters, gensecondfilters: integers which show the amount of neurons, default is 64,3 respectively 
 
-
   Returns: keras sequential model of the generator model
   """
   # begin the build of the model 
@@ -185,13 +184,7 @@ def Generator(units=128*12*12, negativeslopecoefficient=0.2,size1=(2,2),size2=(4
   return generator_model
 
 
-
-discriminator = Discriminator()
-generator = Generator()
-
-generator.summary()
-
-def Get_Gan(discriminator=discriminator, generator=generator,latent_dim=latent_dim):
+def Get_Gan(discriminator=Discriminator(), generator=Generator(),latent_dim=latent_dim):
   """
   Function that gets the gan
 
