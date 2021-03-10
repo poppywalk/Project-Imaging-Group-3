@@ -8,6 +8,7 @@ from keras.layers.convolutional import Conv2D, UpSampling2D
 from tensorflow.keras.layers import Dense, Flatten, LeakyReLU, Dropout, Reshape, Conv2D, MaxPool2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Sequential
+from keras.layers import Conv2DTranspose
 
 def RunOnGPU():
   """
@@ -50,7 +51,7 @@ def plotImages(images, dim=(10, 10), figsize=(10, 10), title=''):
       plt.imshow(images[i], interpolation='nearest')
       plt.axis('off')
   plt.tight_layout()
-  plt.subtitle(title)
+  plt.suptitle(title)
   plt.show()
 
 def get_pcam_generators(base_dir, train_batch_size=32):
@@ -89,24 +90,27 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
   First_Leaky_relu= LeakyReLU(0.2)(First_layer)
   # (n,96,96,32)
   #The max pooling or strided convolutional layer scales the images down with a factor of 4
-  First_Max_Pool = MaxPool2D(pool_size = pool_size)(First_Leaky_relu)
-  #model.add(Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same'))
+  # First_Max_Pool = MaxPool2D(pool_size = pool_size)(First_Leaky_relu)
+  First_Strided_convolution = Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same')(First_Leaky_relu)
   # (n,24,24,32)
-  Second_layer = Conv2D(first_filters, kernel_size, padding = 'same')(First_Max_Pool) 
+  Second_layer = Conv2D(first_filters, kernel_size, padding = 'same')(First_Strided_convolution) 
   # (n,24,24,32)
   Second_Leaky_relu= LeakyReLU(0.2)(Second_layer)
   # (n,24,24,32)
   #The max pooling or strided convolutional layer scales the images down with a factor of 4
-  Second_Max_Pool = MaxPool2D(pool_size = pool_size)(Second_Leaky_relu)
-  #model.add(Conv2D(fourth_filters, kernel_size, strides=(4, 4), padding = 'same'))
+  # Second_Max_Pool = MaxPool2D(pool_size = pool_size)(Second_Leaky_relu)
+  Second_Strided_convolution = Conv2D(third_filters, kernel_size, strides=(4, 4), padding = 'same')(Second_Leaky_relu)  
   # (n,6,6,64)
-  Flatten = keras.layers.Flatten()(Second_Max_Pool)
+  Flatten = keras.layers.Flatten()(Second_Strided_convolution)
   # (n,2304)
   Dense_1 = Dense(64)(Flatten)
   # (n,64)
   Third_Leaky_relu = LeakyReLU(0.2)(Dense_1)
   # (n,64)
+  #The Fake/Real output
   output1 = Dense(1, activation = 'sigmoid')(Third_Leaky_relu)
+  #The class output
+  # output2 = Dense(n_classes, activation='softmax')
   # (n,1)
   discriminator = keras.Model(inputs=input_layer,outputs=output1)
   #Compile the model by specifying the loss and optimizer
@@ -120,7 +124,6 @@ def Generator():
     Returns: generator, the generator model
   """
   generator = keras.models.Sequential()
-  # 
   generator.add(Dense(128*12*12, input_dim=latent_dim, kernel_initializer=keras.initializers.RandomNormal(stddev=0.02)))
   # (n,18432)
   generator.add(LeakyReLU(0.2))
@@ -128,16 +131,18 @@ def Generator():
   generator.add(Reshape((12,12,128)))
   # (n,12,12,128)
   #Upsampeling, upsamples the image by a factor of two
-  generator.add(UpSampling2D(size=(2, 2)))
-  # Conv2DTranspose can be used as well but is slower
+  # generator.add(UpSampling2D(size=(2, 2)))
+  # Conv2DTranspose
+  generator.add(Conv2DTranspose(64, (3,3), strides = (2,2),padding ='same'))
   # (n,24,24,128)
   generator.add(Conv2D(64, kernel_size=(3, 3), padding='same'))
   # (n,24,24,64)
   generator.add(LeakyReLU(0.2))
   # (n,24,24,64)
   #Upsampeling, upsamples the image by factor of four
-  generator.add(UpSampling2D(size=(4, 4)))
-  # Conv2DTranspose can be used as well but is slower
+  # generator.add(UpSampling2D(size=(4, 4)))
+  # Conv2DTranspose
+  generator.add(Conv2DTranspose(64, (3,3), strides = (4,4),padding ='same'))
   # (n,96,96,64)
   generator.add(Conv2D(3, kernel_size=(3, 3), padding='same', activation='tanh'))
   # (n,96,96,3)
