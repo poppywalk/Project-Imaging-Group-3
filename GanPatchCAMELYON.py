@@ -135,6 +135,7 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
   discriminator_model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
   return discriminator_model
 
+
 def Generator(units=128*12*12, negativeslopecoefficient=0.2,size1=(2,2),size2=(4,4),kernel_size=(3, 3),genfirstfilters=64,gensecondfilters=3):
   """
   The Generator is a neural network that generates fake images
@@ -157,7 +158,7 @@ def Generator(units=128*12*12, negativeslopecoefficient=0.2,size1=(2,2),size2=(4
   # the input for this layer is (the output of the first dense layer): (n,18432)
   generator_model.add(LeakyReLU(negativeslopecoefficient))
   # add a reshape layer to shape the data
-  # the input for this layer is (the output of the first LeakyReLU): (n,18342)
+  # the input for this layer is (the output of the first LeakyReLU): (n,18432)
   generator_model.add(Reshape((12,12,128)))
   # add an UpSampling layer to repeat the rows and columns of the data by size[0] and size[1] respectively
   # the input to this layer is (the output of the Reshape layer): (n,12,12,128)
@@ -221,7 +222,7 @@ def Train_Gan(epochs=epochs,X_train=X_train,batch_size=batch_size,latent_dim=lat
 
   for epoch in range(epochs):
 
-    print(f'Epoch {epoch}')
+    print(f'Epoch {epoch+1}')
     start = time.time()
 
     for x_train,y_train in X_train:
@@ -269,10 +270,6 @@ def Train_Gan(epochs=epochs,X_train=X_train,batch_size=batch_size,latent_dim=lat
         break
     # print the epoch and how much time was needed to do the epoch
     print ('Time for epoch {} is {} sec'.format(e, time.time()-start))
-
-    # save the checkpoints every 2 epochs
-    if (e) % 2 == 0:
-      checkpoint.save(file_prefix = checkpoint_prefix)
     
     # add the loss, comes in handy for plotting and checking that the generator and discriminator have the same learning speed
     discriminator_losses.append(discriminator_loss)

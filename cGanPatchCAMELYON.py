@@ -254,7 +254,7 @@ def Train_Gan(epochs=epochs,X_train=X_train,batch_size=batch_size,latent_dim=lat
 
   for epoch in range(epochs):
 
-    print(f'Epoch {epoch}')
+    print(f'Epoch {epoch+1}')
     start = time.time()
     batches = 0 
     for x_train,y_train in X_train:
