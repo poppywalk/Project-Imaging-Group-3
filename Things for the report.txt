@@ -1,6 +1,0 @@
-explain:
-- LeakyReLU with negativeslopecoefficient
-- discriminator_model.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
-- generator_model.add(Dense(units, input_dim=latent_dim, kernel_initializer=keras.initializers.RandomNormal(stddev=0.02)))
-- generator_model.add(Conv2D(gensecondfilters, kernel_size, padding='same', activation='tanh'))
-- units=128*12*12
