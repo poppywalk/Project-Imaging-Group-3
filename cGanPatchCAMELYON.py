@@ -146,7 +146,7 @@ def Generator(latent_dim=100):
   generator = Model([images_input, labels_input], out_layer)
 
   # compile the model
-  generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
+  generator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam())
 
   return generator
 
@@ -207,7 +207,7 @@ def Discriminator(kernel_size=(3,3), pool_size=(4,4), first_filters=32, second_f
   discriminator = Model(inputs=[images_input, labels_input],outputs=output1)
 
   # compile the model
-  discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam(lr=0.0002, beta_1=0.5))
+  discriminator.compile(loss='binary_crossentropy', optimizer=keras.optimizers.Adam())
 
   return discriminator
 
