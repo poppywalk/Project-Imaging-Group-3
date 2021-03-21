@@ -1,3 +1,8 @@
+from tensorflow.keras import Model
+import numpy as np
+import matplotlib.pyplot as plt 
+from PIL import Image
+import tensorflow as tf
 
 def plotImages(images, label,dim=(10,10), figsize=(10, 10), title=''):
     """
@@ -47,17 +52,20 @@ def Generate_Fake_Images(generator,batch_size=64,latent_dim=100):
     generated_images = generator.predict([geninput,genlabels])
     generated_images = (generated_images+1.0)/2.0
     return generated_images, genlabels 
+
 generator = tf.keras.models.load_model('generator_model_120')
 fake_images,labels = Generate_Fake_Images(generator,batch_size=16)
 plotImages(fake_images,labels)
 batch=0
 #Code that saves the fake images
+#To save the images create two folders one titled 0 and one titled 1 to sort the images into with and without metastases
 N_batch = 64
-for i in range(1024):
-  Fake_images, label = Generate_Fake_Images(generator,batch_size=N_batch)
-  for j in range(N_batch):
-    image = (Fake_images[j] * 255).astype(np.uint8)
-    image = Image.fromarray(image,'RGB')
-    image.save('%1d/Fake_image_%07d.jpg' % (int(label[j]),N_batch*batch+j))
-  batch +=1
-  print(batch)
+# #Amount of batches of images that are created
+# for i in range(1024):
+#   Fake_images, label = Generate_Fake_Images(generator,batch_size=N_batch)
+#   for j in range(N_batch):
+#     image = (Fake_images[j] * 255).astype(np.uint8)
+#     image = Image.fromarray(image,'RGB')
+#     image.save('%1d/Fake_image_%07d.jpg' % (int(label[j]),N_batch*batch+j))
+#   batch +=1
+#   print(batch)
